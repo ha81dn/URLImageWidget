@@ -152,7 +152,6 @@ public class WidgetReceiver extends AppWidgetProvider {
                     conn.setDoInput(true);
                     conn.connect();
                     InputStream is = conn.getInputStream();
-                    conn.disconnect();
                     result = BitmapFactory.decodeStream(is);
                     is.close();
                     conn.disconnect();
