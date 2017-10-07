@@ -3,7 +3,7 @@
 
     <string name="pref_header_data_sync">Synchronisationseinstellungen</string>
     <string name="updating">Bild wird aktualisiert, bitte warten&#8230;</string>
-    <string name="finished">Bild wurde erfolgreich aktualisiert.</string>
+    <string name="finished">Bild erfolgreich aktualisiert</string>
 
     <string name="tap_to_update">Zum Abrufen aktueller Bilddaten bitte antippen!</string>
 </resources>
