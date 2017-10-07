@@ -17,6 +17,7 @@ import android.widget.RemoteViews;
 import android.widget.Toast;
 
 import java.io.InputStream;
+import java.net.HttpURLConnection;
 import java.net.URL;
 import java.security.SecureRandom;
 import java.security.cert.CertificateException;
@@ -137,18 +138,35 @@ public class WidgetReceiver extends AppWidgetProvider {
         @Override
         protected Bitmap doInBackground(String... urls) {
             try {
+                Bitmap result;
                 if (urls[0].equals("")) return null;
-                HttpsURLConnection.setDefaultHostnameVerifier(new NullHostNameVerifier());
-                SSLContext context = SSLContext.getInstance("TLS");
-                context.init(null, new X509TrustManager[]{new NullX509TrustManager()}, new SecureRandom());
-                HttpsURLConnection.setDefaultSSLSocketFactory(context.getSocketFactory());
+                publishProgress(context.getString(R.string.updating));
+                if (urls[0].toLowerCase().startsWith("https")) {
+                    HttpsURLConnection.setDefaultHostnameVerifier(new NullHostNameVerifier());
+                    SSLContext context = SSLContext.getInstance("TLS");
+                    context.init(null, new X509TrustManager[]{new NullX509TrustManager()}, new SecureRandom());
+                    HttpsURLConnection.setDefaultSSLSocketFactory(context.getSocketFactory());
 
-                URL myFileUrl = new URL(urls[0]);
-                HttpsURLConnection conn = (HttpsURLConnection) myFileUrl.openConnection();
-                conn.setDoInput(true);
-                conn.connect();
-                InputStream is = conn.getInputStream();
-                return BitmapFactory.decodeStream(is);
+                    URL myFileUrl = new URL(urls[0]);
+                    HttpsURLConnection conn = (HttpsURLConnection) myFileUrl.openConnection();
+                    conn.setDoInput(true);
+                    conn.connect();
+                    InputStream is = conn.getInputStream();
+                    conn.disconnect();
+                    result = BitmapFactory.decodeStream(is);
+                    is.close();
+                    conn.disconnect();
+                } else {
+                    URL myFileUrl = new URL(urls[0]);
+                    HttpURLConnection conn = (HttpURLConnection) myFileUrl.openConnection();
+                    conn.setDoInput(true);
+                    conn.connect();
+                    InputStream is = conn.getInputStream();
+                    result = BitmapFactory.decodeStream(is);
+                    is.close();
+                    conn.disconnect();
+                }
+                return result;
             } catch (Exception error) {
                 publishProgress(error.getLocalizedMessage());
             }
@@ -158,7 +176,7 @@ public class WidgetReceiver extends AppWidgetProvider {
         @Override
         protected void onProgressUpdate(String... msg) {
             try {
-                Toast.makeText(context, msg[0], Toast.LENGTH_LONG).show();
+                Toast.makeText(context, msg[0], Toast.LENGTH_SHORT).show();
             } catch (Exception ignore) {
             }
             /*
@@ -185,6 +203,7 @@ public class WidgetReceiver extends AppWidgetProvider {
         @Override
         protected void onPostExecute(Bitmap result) {
             if (isCancelled() || result == null) return;
+            Toast.makeText(context, context.getString(R.string.finished), Toast.LENGTH_LONG).show();
             SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(context);
             RemoteViews remoteViews = new RemoteViews(context.getPackageName(), R.layout.widget_layout);
             applyOnClick(context, remoteViews, targetWidgetId);
